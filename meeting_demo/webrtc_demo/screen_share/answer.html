@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <br>
+    <label for="offer">Offer SDP: </label>
+    <br>
+    <textarea id="offer" onchange="getScreenShare()" rows="3" cols="50"></textarea>
+    <br>
+
+    <br>
+    <label for="offer-candidate">Offer Candidate: </label>
+    <br>
+    <textarea id="offer-candidate" onchange="setOfferCandidate()" rows="3" cols="50"></textarea>
+    <br>
+
+    当前共享的区域: <br>
+    <video id="local-video" autoplay width="50%" height="auto"></video> <br>
+
+    远程共享区域: <br>
+    <video id="remote-video" autoplay width="50%" height="auto"></video> <br>
+
+    <script>
+        // 1. 创建PeerConnection
+        const pc = new RTCPeerConnection()
+
+        const getScreenShare = async () => {
+            // 2. 获取屏幕媒体流
+            const stream = await navigator.mediaDevices.getDisplayMedia({video: true})
+            document.getElementById('local-video').srcObject = stream
+
+            // 3. 将流添加到PeerConnection
+            stream.getTracks().forEach(track => pc.addTrack(track, stream))
+
+            // 4. 获取输入框中的 offer sdp, 设置为 remoteDescription
+            const offer = JSON.parse(document.getElementById('offer').value)
+            await pc.setRemoteDescription({"type": "offer", "sdp": offer})
+
+            // 5. 创建 answer sdp，设为localDescription，并输出在console
+            const answer = await pc.createAnswer()
+            await pc.setLocalDescription(answer)
+            console.log('answer:', JSON.stringify(answer.sdp))
+        }
+
+        // 6. 添加新发现的ICE Candidate
+        const setOfferCandidate = async () => {
+            const offerCandidate = JSON.parse(document.getElementById('offer-candidate').value)
+            await pc.addIceCandidate(offerCandidate)
+        }
+
+        // 7. 异步监听stream
+        // 监听远程peer流媒体轨道的变化
+        pc.ontrack = async (event) => {
+            document.getElementById('remote-video').srcObject = event.streams[0]
+        }
+        // 监听本地ICE发现的新的候选地址
+        pc.onicecandidate = async (event) => {
+            if(event.candidate) {
+                console.log('candidate:', JSON.stringify(event.candidate))
+            }
+        }
+
+
+    </script>
+</body>
+</html>
