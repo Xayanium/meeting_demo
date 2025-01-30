@@ -17,7 +17,7 @@ type UserAuth struct {
 
 // GenerateToken 生成Token
 func GenerateToken(id uint, name string) (string, error) {
-	userAuth := UserAuth{
+	userAuth := &UserAuth{
 		Id:             id,
 		Name:           name,
 		StandardClaims: jwt.StandardClaims{},
